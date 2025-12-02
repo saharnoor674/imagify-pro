@@ -1,0 +1,23 @@
+# Python virtual environment
+venv/
+__pycache__/
+
+# Node modules (React)
+node_modules/
+
+# Environment variables
+*.env
+
+# FastAPI generated results
+results/
+
+# Temporary files
+*.log
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Build output
+dist/
+build/
