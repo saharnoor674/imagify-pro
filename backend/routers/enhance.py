@@ -1,38 +1,43 @@
-# backend/routers/enhance.py
 from fastapi import APIRouter, UploadFile, File, Query
-from fastapi.responses import FileResponse
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageFilter
 import io
-import os
+import base64
 
 router = APIRouter()
 
-# Optional: create a results folder if it doesn't exist
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "../results")
-os.makedirs(RESULTS_DIR, exist_ok=True)
-
 @router.post("/api/enhance/")
-async def enhance(file: UploadFile = File(...), level: float = Query(50, ge=0, le=100)):
-    """
-    Enhance uploaded image based on user-selected level (0-100).
-    """
+async def enhance(
+    file: UploadFile = File(...),
+    enh: float = Query(50, ge=0, le=100),
+    sharp: float = Query(50, ge=0, le=100),
+    clarity: float = Query(50, ge=0, le=100)
+):
     # Read image
     image = Image.open(io.BytesIO(await file.read()))
-    
-    # Convert level 0-100 to enhancement factor (1.0 = original, 2.0 = max)
-    factor = 1 + (level / 100)
-    
-    # Apply sharpness enhancement (you can add clarity, contrast later)
+
+    # -----------------------------
+    # 1️⃣ Enhancement (brightness/contrast)
+    factor_enh = 1 + (enh / 100)
+    enhancer = ImageEnhance.Contrast(image)
+    image = enhancer.enhance(factor_enh)
+
+    # -----------------------------
+    # 2️⃣ Sharpness
+    factor_sharp = 1 + (sharp / 100)
     enhancer = ImageEnhance.Sharpness(image)
-    image = enhancer.enhance(factor)
-    
-    # Save enhanced image to results folder
-    output_filename = f"enhanced_{file.filename}"
-    output_path = os.path.join(RESULTS_DIR, output_filename)
-    image.save(output_path)
+    image = enhancer.enhance(factor_sharp)
 
-    # Return the image via FileResponse
-    return FileResponse(output_path, media_type="image/png", filename=output_filename)
+    # -----------------------------
+    # 3️⃣ Clarity (simple filter to simulate clarity)
+    factor_clarity = clarity / 100
+    if factor_clarity > 0:
+        image = image.filter(ImageFilter.DETAIL)
 
+    # -----------------------------
+    # Convert to base64
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    img_bytes = buffer.getvalue()
+    base64_img = base64.b64encode(img_bytes).decode("utf-8")
 
-
+    return {"image": base64_img}
