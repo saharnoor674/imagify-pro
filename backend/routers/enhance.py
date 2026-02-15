@@ -13,31 +13,43 @@ async def enhance(
     clarity: float = Query(50, ge=0, le=100)
 ):
     # Read image
-    image = Image.open(io.BytesIO(await file.read()))
+    image = Image.open(io.BytesIO(await file.read())).convert("RGB")
 
     # -----------------------------
-    # 1️⃣ Enhancement (brightness/contrast)
-    factor_enh = 1 + (enh / 100)
-    enhancer = ImageEnhance.Contrast(image)
-    image = enhancer.enhance(factor_enh)
+    # 1️⃣ Brightness
+    brightness_factor = 1 + (enh - 50) / 100
+    image = ImageEnhance.Brightness(image).enhance(brightness_factor)
 
     # -----------------------------
-    # 2️⃣ Sharpness
-    factor_sharp = 1 + (sharp / 100)
-    enhancer = ImageEnhance.Sharpness(image)
-    image = enhancer.enhance(factor_sharp)
+    # 2️⃣ Contrast
+    contrast_factor = 1 + (enh - 50) / 80
+    image = ImageEnhance.Contrast(image).enhance(contrast_factor)
 
     # -----------------------------
-    # 3️⃣ Clarity (simple filter to simulate clarity)
-    factor_clarity = clarity / 100
-    if factor_clarity > 0:
+    # 3️⃣ Color (Vibrance)
+    color_factor = 1 + (enh - 50) / 70
+    image = ImageEnhance.Color(image).enhance(color_factor)
+
+    # -----------------------------
+    # 4️⃣ Sharpness
+    sharp_factor = 1 + sharp / 60
+    image = ImageEnhance.Sharpness(image).enhance(sharp_factor)
+
+    # -----------------------------
+    # 5️⃣ Clarity (real visible effect)
+    if clarity > 30:
+        image = image.filter(ImageFilter.SHARPEN)
+
+    if clarity > 70:
         image = image.filter(ImageFilter.DETAIL)
 
     # -----------------------------
-    # Convert to base64
+    # Convert to Base64
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
-    img_bytes = buffer.getvalue()
-    base64_img = base64.b64encode(img_bytes).decode("utf-8")
+    base64_img = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-    return {"image": base64_img}
+    return {
+        "status": "success",
+        "image": base64_img
+    }

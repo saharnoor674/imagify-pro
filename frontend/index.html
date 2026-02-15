@@ -1,49 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Imagify Pro - Enhance Image</title>
-</head>
-<body>
-
-  <h2>Upload Image and Adjust Enhancement</h2>
-
-  <!-- Image upload -->
-  <input type="file" id="imageInput" accept="image/*" />
-  <br><br>
-
-  <!-- Enhancement Slider -->
-  <label>Enhancement Level: <span id="enhValue">50</span></label>
-  <input type="range" id="enhSlider" min="0" max="100" value="50" />
-  <br><br>
-
-  <!-- Sharpness Slider -->
-  <label>Sharpness Level: <span id="sharpValue">50</span></label>
-  <input type="range" id="sharpSlider" min="0" max="100" value="50" />
-  <br><br>
-
-  <!-- Clarity Slider -->
-  <label>Clarity Level: <span id="clarityValue">50</span></label>
-  <input type="range" id="claritySlider" min="0" max="100" value="50" />
-  <br><br>
-
-  <!-- Enhance Button -->
-  <button id="enhanceBtn">Enhance Image</button>
-  <br><br>
-
-  <!-- Result Image -->
-  <img id="resultImage" src="" style="max-width: 500px; display:none;" />
-  <img id="resultImage" src="" style="max-width: 500px; display:none;" />
-<br>
-<!-- Loading spinner -->
-<div id="spinner" style="display:none;">Processing...</div>
-<br>
-<!-- Download button -->
-<button id="downloadBtn" style="display:none;">Download Enhanced Image</button>
-
-
-  <!-- Link to JS file -->
-  <script src="script.js"></script>
-
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Imagify Pro - React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

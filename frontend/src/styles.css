@@ -1,0 +1,13 @@
+:root{
+  --max-width: 780px;
+  --accent: #2563eb;
+}
+body{font-family: Inter, system-ui, Arial, sans-serif; padding:20px;}
+.container{max-width:var(--max-width); margin:0 auto}
+.row{margin:12px 0; display:flex; flex-direction:column}
+.row.actions{flex-direction:row; gap:8px}
+label{font-weight:600; margin-bottom:6px}
+input[type="range"]{width:100%}
+.result{margin-top:16px}
+.result img{max-width:100%; border:1px solid #ddd; border-radius:6px}
+.spinner{color:var(--accent)}
