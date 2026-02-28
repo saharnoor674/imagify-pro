@@ -7,7 +7,7 @@ import os
 # import routers
 from backend.routers import enhance  # existing
 from backend.routers import animate  # new
-from backend.routers import video    # if exists
+from backend.routers import video    # exists
 
 app = FastAPI()
 
@@ -27,8 +27,7 @@ def root():
 # include routers
 app.include_router(enhance.router)
 app.include_router(animate.router)
-# if video router exists:
-# app.include_router(video.router)
+app.include_router(video.router)
 
 # results serving
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
@@ -49,7 +48,7 @@ import os
 # import routers
 from backend.routers import enhance  # existing
 from backend.routers import animate  # new
-from backend.routers import video    # if exists
+from backend.routers import video    # exists
 
 app = FastAPI()
 
@@ -69,8 +68,7 @@ def root():
 # include routers
 app.include_router(enhance.router)
 app.include_router(animate.router)
-# if video router exists:
-# app.include_router(video.router)
+app.include_router(video.router)
 
 # results serving
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")

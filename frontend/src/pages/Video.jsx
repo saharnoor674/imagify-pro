@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import API_BASE from '../config';
 
-export default function Animation() {
+export default function Video() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [resultUrl, setResultUrl] = useState(null);
@@ -22,18 +22,22 @@ export default function Animation() {
     }
   };
 
-  const generateSmile = async () => {
+  const generateVideo = async () => {
     if (!selectedImage) { setError('Please select an image first'); return; }
     setLoading(true);
     setError(null);
     try {
       const formData = new FormData();
       formData.append('file', selectedImage);
-      const response = await fetch(`${API_BASE}/api/animate/smile`, {
+      formData.append('source', 'upload');
+      const response = await fetch(`${API_BASE}/api/animate/video`, {
         method: 'POST',
         body: formData,
       });
-      if (!response.ok) throw new Error('Failed to generate smile');
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Failed to generate video');
+      }
       const blob = await response.blob();
       setResultUrl(URL.createObjectURL(blob));
     } catch (err) {
@@ -56,8 +60,8 @@ export default function Animation() {
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #faf5ff, #eff6ff)', padding: '3rem 1rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>Smile Effect</h1>
-          <p style={{ color: '#6b7280' }}>Upload a face photo and add a smile effect</p>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>Video Generation</h1>
+          <p style={{ color: '#6b7280' }}>Upload a face photo and generate a realistic video with eye blinking, smile & head movement</p>
         </div>
 
         <div style={{ background: 'white', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '2rem' }}>
@@ -83,8 +87,8 @@ export default function Animation() {
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button onClick={generateSmile} disabled={!selectedImage || loading} style={{ flex: 1, background: loading || !selectedImage ? '#9ca3af' : 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: loading || !selectedImage ? 'not-allowed' : 'pointer', opacity: loading || !selectedImage ? 0.5 : 1 }}>
-                  {loading ? 'Processing...' : 'Generate Smile'}
+                <button onClick={generateVideo} disabled={!selectedImage || loading} style={{ flex: 1, background: loading || !selectedImage ? '#9ca3af' : 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: loading || !selectedImage ? 'not-allowed' : 'pointer', opacity: loading || !selectedImage ? 0.5 : 1 }}>
+                  {loading ? ' Generating... (~40s)' : ' Generate Video'}
                 </button>
                 <button onClick={reset} style={{ padding: '0.75rem 1.5rem', border: '2px solid #d1d5db', borderRadius: '0.5rem', fontWeight: '600', background: 'white', cursor: 'pointer' }}>
                   Reset
@@ -93,7 +97,7 @@ export default function Animation() {
 
               {error && (
                 <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginTop: '1rem' }}>
-                  {error}
+                  ⚠️ {error}
                 </div>
               )}
             </div>
@@ -105,19 +109,20 @@ export default function Animation() {
                 {loading ? (
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid #e9d5ff', borderTopColor: '#9333ea', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#9333ea', fontWeight: 600 }}>Generating smile...</p>
+                    <p style={{ color: '#9333ea', fontWeight: 600 }}> AI is animating your photo...</p>
+                    <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem' }}>This takes ~40 seconds</p>
                   </div>
                 ) : resultUrl ? (
                   <div style={{ width: '100%' }}>
-                    <img src={resultUrl} alt="Result" style={{ width: '100%', height: '256px', objectFit: 'contain', borderRadius: '0.5rem', marginBottom: '1rem' }} />
-                    <a href={resultUrl} download="smile_result.jpg" style={{ display: 'block', width: '100%', textAlign: 'center', background: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', textDecoration: 'none' }}>
-                      Download Result
+                    <video src={resultUrl} controls autoPlay loop style={{ width: '100%', maxHeight: '256px', objectFit: 'contain', borderRadius: '0.5rem', marginBottom: '1rem' }} />
+                    <a href={resultUrl} download="imagify_pro_video.mp4" style={{ display: 'block', width: '100%', textAlign: 'center', background: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', textDecoration: 'none' }}>
+                      ⬇ Download MP4
                     </a>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', color: '#9ca3af' }}>
                     <div style={{ fontSize: '3rem', marginBottom: '1rem' }}></div>
-                    <p>Your smile effect will appear here</p>
+                    <p>Your video will appear here</p>
                   </div>
                 )}
               </div>
