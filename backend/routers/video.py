@@ -225,3 +225,7 @@ async def get_model_info():
         "output": "480p MP4 video (~5 seconds)",
         "cost": "~$0.03-0.05 per video"
     }
+
+
+
+

@@ -66,7 +66,7 @@ async def generate_smile(file: UploadFile = File(...)):
         name, ext = os.path.splitext(file.filename)
         out_filename = f"smile_{name}"
 
-        print(f"📥 Processing: {file.filename}")
+        print(f" Processing: {file.filename}")
 
         # ── ALWAYS call Replicate AI first (with retry) ──────────────────────
         out_path = await animator.generate_smile_animation(
@@ -78,7 +78,7 @@ async def generate_smile(file: UploadFile = File(...)):
         media_type = "image/webp" if out_ext == ".webp" else "image/jpeg"
         download_name = f"{out_filename}{out_ext}"
 
-        print(f"✅ Returning: {out_path} as {media_type}")
+        print(f"Returning: {out_path} as {media_type}")
 
         return FileResponse(
             out_path,
@@ -87,7 +87,7 @@ async def generate_smile(file: UploadFile = File(...)):
         )
 
     except Exception as e:
-        print(f"❌ Error: {str(e)}")
+        print(f" Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:

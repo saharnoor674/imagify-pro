@@ -2,6 +2,7 @@
 import os
 import base64
 import time
+import io
 from pathlib import Path
 from PIL import Image, ImageOps
 import cv2
@@ -9,8 +10,10 @@ import numpy as np
 import replicate
 from dotenv import load_dotenv
 
-# ─── Load .env ────────────────────────────────────────────────────────────────
-load_dotenv()
+
+# ─── Load .env permanently ────────────────────────────────────────────────────
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(dotenv_path=BASE_DIR / ".env", override=True)
 # ─────────────────────────────────────────────────────────────────────────────
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
@@ -20,12 +23,35 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 TEMP_DIR = os.path.join(os.path.dirname(__file__), "..", "temp")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
-# ─── Token ────────────────────────────────────────────────────────────────────
-REPLICATE_TOKEN = os.environ.get("REPLICATE_API_TOKEN", "")
-# ─────────────────────────────────────────────────────────────────────────────
+MAX_RETRIES = 3
+RETRY_DELAY = 4
 
-MAX_RETRIES = 3       # retry up to 3 times
-RETRY_DELAY = 4       # wait 4 seconds between retries
+
+def get_token():
+    """Always read fresh token — never cached."""
+    token = os.environ.get("REPLICATE_API_TOKEN", "")
+    if not token:
+        load_dotenv(dotenv_path=BASE_DIR / ".env", override=True)
+        token = os.environ.get("REPLICATE_API_TOKEN", "")
+    if not token:
+        raise Exception("REPLICATE_API_TOKEN not set! Check your backend/.env file")
+    return token
+
+
+def compress_image(input_path: str, max_size: int = 800) -> bytes:
+    """Compress and resize image before sending to Replicate."""
+    img = Image.open(input_path).convert("RGB")
+    # Resize if too large
+    if img.width > max_size or img.height > max_size:
+        img.thumbnail((max_size, max_size), Image.LANCZOS)
+        print(f"📐 Resized image to {img.width}x{img.height}")
+    # Compress to JPEG
+    buffer = io.BytesIO()
+    img.save(buffer, format="JPEG", quality=82)
+    compressed = buffer.getvalue()
+    original_size = os.path.getsize(input_path)
+    print(f"📦 Compressed: {original_size//1024}KB → {len(compressed)//1024}KB")
+    return compressed
 
 
 def animate_placeholder(input_path: str, output_name: str) -> str:
@@ -50,59 +76,46 @@ async def generate_smile_animation(input_path: str, output_filename: str) -> str
     Generate a REAL AI smile using Replicate API with retry logic.
     Retries up to 3 times before falling back to OpenCV.
     """
-    print(" Starting AI smile generation via Replicate...")
+    print("😊 Starting AI smile generation via Replicate...")
 
     last_error = None
 
-    # ── Retry loop ────────────────────────────────────────────────────────────
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            print(f" Attempt {attempt}/{MAX_RETRIES}...")
+            print(f"🔄 Attempt {attempt}/{MAX_RETRIES}...")
             result_path = await _replicate_smile(input_path, output_filename)
-            print(f"Real AI smile generated on attempt {attempt}!")
+            print(f"✅ Real AI smile generated on attempt {attempt}!")
             return result_path
 
         except Exception as e:
             last_error = e
-            print(f"Attempt {attempt} failed: {e}")
+            print(f"⚠️ Attempt {attempt} failed: {e}")
 
             if attempt < MAX_RETRIES:
-                print(f"Waiting {RETRY_DELAY}s before retry...")
+                print(f"⏳ Waiting {RETRY_DELAY}s before retry...")
                 time.sleep(RETRY_DELAY)
 
-    # ── All retries failed → fallback to OpenCV ───────────────────────────────
-    print(f" All {MAX_RETRIES} attempts failed. Using OpenCV fallback...")
+    print(f"❌ All {MAX_RETRIES} attempts failed. Using OpenCV fallback...")
     return await _opencv_smile_fallback(input_path, output_filename)
 
 
 async def _replicate_smile(input_path: str, output_filename: str) -> str:
-    """
-    Use fofr/expression-editor on Replicate.
-    Real AI model - produces natural photorealistic smiles.
-    """
-    print(" Connecting to Replicate API...")
+    """Use fofr/expression-editor on Replicate."""
+    print("🚀 Connecting to Replicate API...")
 
-    # Read and encode image
-    with open(input_path, "rb") as f:
-        image_bytes = f.read()
+    # ── Get fresh token every time ────────────────────────────────────────────
+    token = get_token()
+    print(f"🔑 Token found: {token[:8]}...")
 
-    suffix = Path(input_path).suffix.lower()
-    mime_map = {
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".png": "image/png",
-        ".webp": "image/webp",
-    }
-    mime_type = mime_map.get(suffix, "image/jpeg")
+    # ── Compress image before sending ─────────────────────────────────────────
+    image_bytes = compress_image(input_path, max_size=800)
     base64_image = base64.b64encode(image_bytes).decode("utf-8")
-    image_data_uri = f"data:{mime_type};base64,{base64_image}"
+    image_data_uri = f"data:image/jpeg;base64,{base64_image}"
 
-    print("Sending image to Replicate AI model...")
+    print("📤 Sending image to Replicate AI model...")
 
-    # Create client with token
-    client = replicate.Client(api_token=REPLICATE_TOKEN)
+    client = replicate.Client(api_token=token)
 
-    # Run model
     output = client.run(
         "fofr/expression-editor:bf913bc90e1c44ba288ba3942a538693b72e8cc7df576f3beebe56adc0a92b86",
         input={
@@ -124,25 +137,23 @@ async def _replicate_smile(input_path: str, output_filename: str) -> str:
         }
     )
 
-    print("Replicate returned result!")
+    print("✅ Replicate returned result!")
 
     if not output or len(output) == 0:
         raise Exception("Empty output from Replicate model")
 
-    # Read file object directly
     result_bytes = output[0].read()
 
     if not result_bytes:
         raise Exception("Empty bytes from Replicate model")
 
-    # Save result
     name = Path(output_filename).stem
     final_path = os.path.join(TEMP_DIR, f"{name}.webp")
 
     with open(final_path, "wb") as f:
         f.write(result_bytes)
 
-    print(f" Saved AI smile: {final_path}")
+    print(f"💾 Saved AI smile: {final_path}")
     return final_path
 
 
@@ -151,7 +162,7 @@ async def _opencv_smile_fallback(input_path: str, output_filename: str) -> str:
     try:
         import mediapipe as mp
 
-        print("Using OpenCV fallback smile...")
+        print("📷 Using OpenCV fallback smile...")
 
         img = cv2.imread(input_path)
         if img is None:
@@ -171,7 +182,7 @@ async def _opencv_smile_fallback(input_path: str, output_filename: str) -> str:
         results = face_mesh.process(img_rgb)
 
         if not results.multi_face_landmarks:
-            print(" No face detected")
+            print("⚠️ No face detected")
             return await _save_original(input_path, output_filename)
 
         landmarks = [
@@ -185,7 +196,7 @@ async def _opencv_smile_fallback(input_path: str, output_filename: str) -> str:
         final_path = os.path.join(TEMP_DIR, f"{name}.jpg")
         cv2.imwrite(final_path, result, [cv2.IMWRITE_JPEG_QUALITY, 95])
 
-        print(f" OpenCV smile saved: {final_path}")
+        print(f"✅ OpenCV smile saved: {final_path}")
         return final_path
 
     except Exception as e:

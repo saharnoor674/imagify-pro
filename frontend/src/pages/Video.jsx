@@ -88,7 +88,7 @@ export default function Video() {
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                 <button onClick={generateVideo} disabled={!selectedImage || loading} style={{ flex: 1, background: loading || !selectedImage ? '#9ca3af' : 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: loading || !selectedImage ? 'not-allowed' : 'pointer', opacity: loading || !selectedImage ? 0.5 : 1 }}>
-                  {loading ? ' Generating... (~40s)' : ' Generate Video'}
+                  {loading ? ' Generating... ' : ' Generate Video'}
                 </button>
                 <button onClick={reset} style={{ padding: '0.75rem 1.5rem', border: '2px solid #d1d5db', borderRadius: '0.5rem', fontWeight: '600', background: 'white', cursor: 'pointer' }}>
                   Reset
@@ -97,7 +97,7 @@ export default function Video() {
 
               {error && (
                 <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginTop: '1rem' }}>
-                  ⚠️ {error}
+                   {error}
                 </div>
               )}
             </div>
@@ -110,7 +110,7 @@ export default function Video() {
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid #e9d5ff', borderTopColor: '#9333ea', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
                     <p style={{ color: '#9333ea', fontWeight: 600 }}> AI is animating your photo...</p>
-                    <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem' }}>This takes ~40 seconds</p>
+                    <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem' }}></p>
                   </div>
                 ) : resultUrl ? (
                   <div style={{ width: '100%' }}>
