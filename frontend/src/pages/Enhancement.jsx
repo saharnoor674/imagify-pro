@@ -165,23 +165,23 @@ export default function Enhancement() {
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                   <label style={{ fontSize: "0.875rem", fontWeight: 600, color: "#374151" }}> Enhancement</label>
-                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#f59e0b" }}>{enh}</span>
+                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#d45ef8" }}>{enh}</span>
                 </div>
-                <input type="range" min="0" max="100" value={enh} onChange={(e) => setEnh(Number(e.target.value))} style={{ width: "100%", accentColor: "#f59e0b", cursor: "pointer" }} />
+                <input type="range" min="0" max="100" value={enh} onChange={(e) => setEnh(Number(e.target.value))} style={{ width: "100%", accentColor: "#9333ea", cursor: "pointer" }} />
               </div>
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                   <label style={{ fontSize: "0.875rem", fontWeight: 600, color: "#374151" }}> Sharpness</label>
-                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#10b981" }}>{sharp}</span>
+                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#d45ef8" }}>{sharp}</span>
                 </div>
-                <input type="range" min="0" max="100" value={sharp} onChange={(e) => setSharp(Number(e.target.value))} style={{ width: "100%", accentColor: "#10b981", cursor: "pointer" }} />
+                <input type="range" min="0" max="100" value={sharp} onChange={(e) => setSharp(Number(e.target.value))} style={{ width: "100%", accentColor: "#9333ea", cursor: "pointer" }} />
               </div>
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                   <label style={{ fontSize: "0.875rem", fontWeight: 600, color: "#374151" }}> Clarity</label>
-                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#3b82f6" }}>{clarity}</span>
+                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#d45ef8" }}>{clarity}</span>
                 </div>
-                <input type="range" min="0" max="100" value={clarity} onChange={(e) => setClarity(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6", cursor: "pointer" }} />
+                <input type="range" min="0" max="100" value={clarity} onChange={(e) => setClarity(Number(e.target.value))} style={{ width: "100%", accentColor: "#9333ea", cursor: "pointer" }} />
               </div>
             </div>
           </div>

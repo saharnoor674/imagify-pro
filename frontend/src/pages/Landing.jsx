@@ -55,7 +55,7 @@ export default function Landing() {
               <div style={{ textAlign: 'center' }}>
                 <img src="/examples/original.jpg" alt="Before"
                   style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                <p style={{ marginTop: 12, fontWeight: 700, color: '#6b7280', fontSize: 14 }}>Before</p>
+                <p style={{ marginTop: 12, fontWeight: 700, color: '#9333ea', fontSize: 14 }}>Before</p>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <span style={{ fontSize: 36, color: '#d1d5db', fontWeight: 300 }}>→</span>
@@ -77,7 +77,7 @@ export default function Landing() {
               <div style={{ textAlign: 'center' }}>
                 <img src="/examples/portrait.jpg" alt="Photo"
                   style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                <p style={{ marginTop: 12, fontWeight: 700, color: '#6b7280', fontSize: 14 }}>Photo</p>
+                <p style={{ marginTop: 12, fontWeight: 700, color: '#9333ea', fontSize: 14 }}>Before</p>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <span style={{ fontSize: 36, color: '#d1d5db', fontWeight: 300 }}>→</span>
@@ -85,7 +85,7 @@ export default function Landing() {
               <div style={{ textAlign: 'center' }}>
                 <video src="/examples/demo.mp4" autoPlay loop muted playsInline
                   style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                <p style={{ marginTop: 12, fontWeight: 700, color: '#10b981', fontSize: 14 }}>Generated Video </p>
+                <p style={{ marginTop: 12, fontWeight: 700, color: '#8310b9', fontSize: 14 }}>After </p>
               </div>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function Landing() {
               <div style={{ textAlign: 'center' }}>
                 <img src="/examples/enhance.jpg" alt="Before"
                   style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.1)', filter: 'brightness(0.8) contrast(0.85) saturate(0.7)' }} />
-                <p style={{ marginTop: 12, fontWeight: 700, color: '#6b7280', fontSize: 14 }}>Before</p>
+                <p style={{ marginTop: 12, fontWeight: 700, color: '#9333ea', fontSize: 14 }}>Before</p>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <span style={{ fontSize: 36, color: '#d1d5db', fontWeight: 300 }}>→</span>
@@ -107,18 +107,17 @@ export default function Landing() {
               <div style={{ textAlign: 'center' }}>
                 <img src="/examples/enhance.jpg" alt="After"
                   style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.1)', filter: 'brightness(1.15) contrast(1.2) saturate(1.3)' }} />
-                <p style={{ marginTop: 12, fontWeight: 700, color: '#f59e0b', fontSize: 14 }}>After </p>
+                <p style={{ marginTop: 12, fontWeight: 700, color: '#9333ea', fontSize: 14 }}>After </p>
               </div>
             </div>
           </div>
 
           {/* ── CTA Button ── */}
           <div style={{ textAlign: 'center', marginTop: 64 }}>
-            <Link to="/enhancement" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', fontWeight: 800, fontSize: 16, padding: '14px 44px', borderRadius: 50, textDecoration: 'none', boxShadow: '0 4px 20px rgba(102,126,234,0.4)' }}>
+            <Link to="/enhancement" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #9333ea, #3b82f6)', color: 'white', fontWeight: 800, fontSize: 16, padding: '14px 44px', borderRadius: 50, textDecoration: 'none', boxShadow: '0 4px 20px rgba(147,51,234,0.4)' }}>
               Try Imagify Pro Free →
             </Link>
           </div>
-
         </div>
       </div>
 
@@ -128,9 +127,9 @@ export default function Landing() {
           <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 800, color: '#1f2937', marginBottom: 12 }}>What can Imagify Pro do?</h2>
           <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: 56, fontSize: 16 }}>Three powerful AI tools in one place</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 28 }}>
-            <FeatureCard to="/enhancement" gradient="linear-gradient(135deg, #f59e0b, #ef4444)" icon="" title="Image Enhancement" description="Boost brightness, sharpness and clarity of any photo in real time using professional-grade AI sliders." bullets={['Live preview', 'Brightness control', 'Deblur & Clarity']} />
-            <FeatureCard to="/animation" gradient="linear-gradient(135deg, #9333ea, #3b82f6)" icon="" title="Smile Animation" description="Upload a face photo and generate a realistic AI smile using Replicate's expression editor model." bullets={['Real AI smile', 'Photorealistic result', 'Download instantly']} />
-            <FeatureCard to="/video" gradient="linear-gradient(135deg, #10b981, #0ea5e9)" icon="" title="Video Generation" description="Turn a single photo into a 5-second MP4 video with eye blinking, smile and natural head movement." bullets={['Eye blinking', 'Head movement', 'MP4 download']} />
+            <FeatureCard to="/enhancement" icon="" title="Image Enhancement" description="Boost brightness, sharpness and clarity of any photo in real time using professional-grade AI sliders." bullets={['Live preview', 'Brightness control', 'Deblur & Clarity']} />
+            <FeatureCard to="/animation" icon="" title="Smile Animation" description="Upload a face photo and generate a realistic AI smile using Replicate's expression editor model." bullets={['Real AI smile', 'Photorealistic result', 'Download instantly']} />
+            <FeatureCard to="/video" icon="" title="Video Generation" description="Turn a single photo into a 5-second MP4 video with eye blinking, smile and natural head movement." bullets={['Eye blinking', 'Head movement', 'MP4 download']} />
           </div>
         </div>
       </div>
@@ -156,7 +155,7 @@ export default function Landing() {
             ))}
           </div>
           <div style={{ marginTop: 64 }}>
-            <Link to="/enhancement" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', fontWeight: 800, fontSize: 16, padding: '14px 44px', borderRadius: 50, textDecoration: 'none', boxShadow: '0 4px 20px rgba(102,126,234,0.4)' }}>
+            <Link to="/enhancement" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #9333ea, #3b82f6)', color: 'white', fontWeight: 800, fontSize: 16, padding: '14px 44px', borderRadius: 50, textDecoration: 'none', boxShadow: '0 4px 20px rgba(147,51,234,0.4)' }}>
               Try Imagify Pro Free →
             </Link>
           </div>
@@ -189,7 +188,7 @@ export default function Landing() {
   );
 }
 
-function FeatureCard({ to, gradient, icon, title, description, bullets }) {
+function FeatureCard({ to, icon, title, description, bullets }) {
   return (
     <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
       <div style={{ padding: '28px 28px 24px' }}>
@@ -203,7 +202,7 @@ function FeatureCard({ to, gradient, icon, title, description, bullets }) {
             </li>
           ))}
         </ul>
-        <Link to={to} style={{ display: 'block', textAlign: 'center', background: gradient, color: 'white', fontWeight: 700, fontSize: 14, padding: '10px 0', borderRadius: 10, textDecoration: 'none' }}>
+        <Link to={to} style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg, #9333ea, #3b82f6)', color: 'white', fontWeight: 700, fontSize: 14, padding: '10px 0', borderRadius: 10, textDecoration: 'none' }}>
           Try Now →
         </Link>
       </div>
