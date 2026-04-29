@@ -5,7 +5,7 @@ import os
 import shutil
 from pathlib import Path
 
-from backend.services import animator
+from services import animator
 
 router = APIRouter()
 
