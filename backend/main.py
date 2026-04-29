@@ -5,9 +5,9 @@ from fastapi.responses import FileResponse
 import os
 
 # import routers
-from backend.routers import enhance  # existing
-from backend.routers import animate  # new
-from backend.routers import video    # exists
+from routers import enhance  # existing
+from routers import animate  # new
+from routers import video    # exists
 
 app = FastAPI()
 
