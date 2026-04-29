@@ -44,13 +44,13 @@ def compress_image(input_path: str, max_size: int = 800) -> bytes:
     # Resize if too large
     if img.width > max_size or img.height > max_size:
         img.thumbnail((max_size, max_size), Image.LANCZOS)
-        print(f"📐 Resized image to {img.width}x{img.height}")
+        print(f" Resized image to {img.width}x{img.height}")
     # Compress to JPEG
     buffer = io.BytesIO()
     img.save(buffer, format="JPEG", quality=82)
     compressed = buffer.getvalue()
     original_size = os.path.getsize(input_path)
-    print(f"📦 Compressed: {original_size//1024}KB → {len(compressed)//1024}KB")
+    print(f" Compressed: {original_size//1024}KB → {len(compressed)//1024}KB")
     return compressed
 
 
@@ -76,43 +76,43 @@ async def generate_smile_animation(input_path: str, output_filename: str) -> str
     Generate a REAL AI smile using Replicate API with retry logic.
     Retries up to 3 times before falling back to OpenCV.
     """
-    print("😊 Starting AI smile generation via Replicate...")
+    print(" Starting AI smile generation via Replicate...")
 
     last_error = None
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            print(f"🔄 Attempt {attempt}/{MAX_RETRIES}...")
+            print(f" Attempt {attempt}/{MAX_RETRIES}...")
             result_path = await _replicate_smile(input_path, output_filename)
-            print(f"✅ Real AI smile generated on attempt {attempt}!")
+            print(f"Real AI smile generated on attempt {attempt}!")
             return result_path
 
         except Exception as e:
             last_error = e
-            print(f"⚠️ Attempt {attempt} failed: {e}")
+            print(f" Attempt {attempt} failed: {e}")
 
             if attempt < MAX_RETRIES:
-                print(f"⏳ Waiting {RETRY_DELAY}s before retry...")
+                print(f" Waiting {RETRY_DELAY}s before retry...")
                 time.sleep(RETRY_DELAY)
 
-    print(f"❌ All {MAX_RETRIES} attempts failed. Using OpenCV fallback...")
+    print(f" All {MAX_RETRIES} attempts failed. Using OpenCV fallback...")
     return await _opencv_smile_fallback(input_path, output_filename)
 
 
 async def _replicate_smile(input_path: str, output_filename: str) -> str:
     """Use fofr/expression-editor on Replicate."""
-    print("🚀 Connecting to Replicate API...")
+    print(" Connecting to Replicate API...")
 
     # ── Get fresh token every time ────────────────────────────────────────────
     token = get_token()
-    print(f"🔑 Token found: {token[:8]}...")
+    print(f" Token found: {token[:8]}...")
 
     # ── Compress image before sending ─────────────────────────────────────────
     image_bytes = compress_image(input_path, max_size=800)
     base64_image = base64.b64encode(image_bytes).decode("utf-8")
     image_data_uri = f"data:image/jpeg;base64,{base64_image}"
 
-    print("📤 Sending image to Replicate AI model...")
+    print(" Sending image to Replicate AI model...")
 
     client = replicate.Client(api_token=token)
 
@@ -137,7 +137,7 @@ async def _replicate_smile(input_path: str, output_filename: str) -> str:
         }
     )
 
-    print("✅ Replicate returned result!")
+    print(" Replicate returned result!")
 
     if not output or len(output) == 0:
         raise Exception("Empty output from Replicate model")
@@ -153,7 +153,7 @@ async def _replicate_smile(input_path: str, output_filename: str) -> str:
     with open(final_path, "wb") as f:
         f.write(result_bytes)
 
-    print(f"💾 Saved AI smile: {final_path}")
+    print(f" Saved AI smile: {final_path}")
     return final_path
 
 
@@ -182,7 +182,7 @@ async def _opencv_smile_fallback(input_path: str, output_filename: str) -> str:
         results = face_mesh.process(img_rgb)
 
         if not results.multi_face_landmarks:
-            print("⚠️ No face detected")
+            print(" No face detected")
             return await _save_original(input_path, output_filename)
 
         landmarks = [
@@ -196,11 +196,11 @@ async def _opencv_smile_fallback(input_path: str, output_filename: str) -> str:
         final_path = os.path.join(TEMP_DIR, f"{name}.jpg")
         cv2.imwrite(final_path, result, [cv2.IMWRITE_JPEG_QUALITY, 95])
 
-        print(f"✅ OpenCV smile saved: {final_path}")
+        print(f" OpenCV smile saved: {final_path}")
         return final_path
 
     except Exception as e:
-        print(f"❌ OpenCV fallback failed: {e}")
+        print(f" OpenCV fallback failed: {e}")
         return await _save_original(input_path, output_filename)
 
 
