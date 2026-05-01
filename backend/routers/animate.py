@@ -1,4 +1,6 @@
 # backend/routers/animate.py
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 import os

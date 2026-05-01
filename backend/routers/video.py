@@ -2,7 +2,8 @@
 Video Generation Router - UPDATED VERSION
 Uses wan-video/wan-2.2-i2v-fast (faster ~39 seconds)
 """
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
