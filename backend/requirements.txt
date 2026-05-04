@@ -5,7 +5,4 @@ replicate
 httpx
 Pillow
 python-dotenv
-numpy
-opencv-python-headless
-mediapipe
 requests

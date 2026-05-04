@@ -3,10 +3,9 @@ import os
 import base64
 import time
 import io
+import asyncio
 from pathlib import Path
 from PIL import Image, ImageOps
-import cv2
-import numpy as np
 import replicate
 from dotenv import load_dotenv
 
@@ -16,15 +15,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=BASE_DIR / ".env", override=True)
 # ─────────────────────────────────────────────────────────────────────────────
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
-RESULTS_DIR = os.path.abspath(RESULTS_DIR)
+RESULTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results"))
+TEMP_DIR    = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "temp"))
 os.makedirs(RESULTS_DIR, exist_ok=True)
+os.makedirs(TEMP_DIR,    exist_ok=True)
 
-TEMP_DIR = os.path.join(os.path.dirname(__file__), "..", "temp")
-os.makedirs(TEMP_DIR, exist_ok=True)
-
-MAX_RETRIES = 3
-RETRY_DELAY = 4
+MAX_RETRIES       = 2    # fewer retries — each one already has a timeout
+RETRY_DELAY       = 2    # seconds between retries
+REPLICATE_TIMEOUT = 60   # seconds to wait for Replicate before giving up
 
 
 def get_token():
@@ -38,19 +36,20 @@ def get_token():
     return token
 
 
-def compress_image(input_path: str, max_size: int = 800) -> bytes:
-    """Compress and resize image before sending to Replicate."""
+def compress_image(input_path: str, max_size: int = 512) -> bytes:
+    """
+    Compress and resize image before sending to Replicate.
+    Smaller size = faster upload + faster model processing.
+    """
     img = Image.open(input_path).convert("RGB")
-    # Resize if too large
     if img.width > max_size or img.height > max_size:
         img.thumbnail((max_size, max_size), Image.LANCZOS)
         print(f" Resized image to {img.width}x{img.height}")
-    # Compress to JPEG
     buffer = io.BytesIO()
-    img.save(buffer, format="JPEG", quality=82)
+    img.save(buffer, format="JPEG", quality=78)  # slightly lower quality = faster transfer
     compressed = buffer.getvalue()
     original_size = os.path.getsize(input_path)
-    print(f" Compressed: {original_size//1024}KB → {len(compressed)//1024}KB")
+    print(f" Compressed: {original_size // 1024}KB → {len(compressed) // 1024}KB")
     return compressed
 
 
@@ -63,190 +62,98 @@ def animate_placeholder(input_path: str, output_name: str) -> str:
         new = Image.new("RGB", (w * 2, h))
         new.paste(im, (0, 0))
         new.paste(mirrored, (w, 0))
-        max_w = 1200
-        if new.width > max_w:
-            new = new.resize((max_w, int(new.height * max_w / new.width)))
+        if new.width > 1200:
+            new = new.resize((1200, int(new.height * 1200 / new.width)))
         out_path = os.path.join(RESULTS_DIR, output_name)
         new.save(out_path, format="PNG", optimize=True)
     return out_path
 
 
-async def generate_smile_animation(input_path: str, output_filename: str) -> str:
+def _run_replicate_sync(image_data_uri: str, token: str) -> bytes:
     """
-    Generate a REAL AI smile using Replicate API with retry logic.
-    Retries up to 3 times before falling back to OpenCV.
+    Blocking Replicate call — runs inside a thread via asyncio.to_thread
+    so it never blocks the FastAPI event loop.
     """
-    print(" Starting AI smile generation via Replicate...")
-
-    last_error = None
-
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            print(f" Attempt {attempt}/{MAX_RETRIES}...")
-            result_path = await _replicate_smile(input_path, output_filename)
-            print(f"Real AI smile generated on attempt {attempt}!")
-            return result_path
-
-        except Exception as e:
-            last_error = e
-            print(f" Attempt {attempt} failed: {e}")
-
-            if attempt < MAX_RETRIES:
-                print(f" Waiting {RETRY_DELAY}s before retry...")
-                time.sleep(RETRY_DELAY)
-
-    print(f" All {MAX_RETRIES} attempts failed. Using OpenCV fallback...")
-    return await _opencv_smile_fallback(input_path, output_filename)
-
-
-async def _replicate_smile(input_path: str, output_filename: str) -> str:
-    """Use fofr/expression-editor on Replicate."""
-    print(" Connecting to Replicate API...")
-
-    # ── Get fresh token every time ────────────────────────────────────────────
-    token = get_token()
-    print(f" Token found: {token[:8]}...")
-
-    # ── Compress image before sending ─────────────────────────────────────────
-    image_bytes = compress_image(input_path, max_size=800)
-    base64_image = base64.b64encode(image_bytes).decode("utf-8")
-    image_data_uri = f"data:image/jpeg;base64,{base64_image}"
-
-    print(" Sending image to Replicate AI model...")
-
     client = replicate.Client(api_token=token)
-
     output = client.run(
         "fofr/expression-editor:bf913bc90e1c44ba288ba3942a538693b72e8cc7df576f3beebe56adc0a92b86",
         input={
-            "image": image_data_uri,
-            "smile": 0.9,
-            "eyebrow": 0.1,
-            "wink": 0,
-            "pupil_x": 0,
-            "pupil_y": 0,
-            "aaa": 0,
-            "eee": 0,
-            "woo": 0,
-            "rotate_pitch": 0,
-            "rotate_yaw": 0,
-            "rotate_roll": 0,
-            "blink": 0,
-            "output_format": "webp",
-            "output_quality": 95,
+            "image":          image_data_uri,
+            "smile":          0.9,
+            "eyebrow":        0.1,
+            "wink":           0,
+            "pupil_x":        0,
+            "pupil_y":        0,
+            "aaa":            0,
+            "eee":            0,
+            "woo":            0,
+            "rotate_pitch":   0,
+            "rotate_yaw":     0,
+            "rotate_roll":    0,
+            "blink":          0,
+            "output_format":  "webp",
+            "output_quality": 90,
         }
     )
-
-    print(" Replicate returned result!")
-
     if not output or len(output) == 0:
         raise Exception("Empty output from Replicate model")
-
     result_bytes = output[0].read()
-
     if not result_bytes:
         raise Exception("Empty bytes from Replicate model")
-
-    name = Path(output_filename).stem
-    final_path = os.path.join(TEMP_DIR, f"{name}.webp")
-
-    with open(final_path, "wb") as f:
-        f.write(result_bytes)
-
-    print(f" Saved AI smile: {final_path}")
-    return final_path
+    return result_bytes
 
 
-async def _opencv_smile_fallback(input_path: str, output_filename: str) -> str:
-    """Fallback: OpenCV + MediaPipe smile."""
-    try:
-        import mediapipe as mp
+async def generate_smile_animation(input_path: str, output_filename: str) -> str:
+    """
+    Generate AI smile via Replicate with:
+      - Non-blocking async execution (asyncio.to_thread)
+      - Per-attempt timeout (REPLICATE_TIMEOUT seconds)
+      - Automatic retry (MAX_RETRIES attempts)
+      - Original-image fallback if all attempts fail
+    """
+    print(" Starting AI smile generation via Replicate...")
 
-        print("📷 Using OpenCV fallback smile...")
+    token          = get_token()
+    image_bytes    = compress_image(input_path, max_size=512)
+    image_data_uri = f"data:image/jpeg;base64,{base64.b64encode(image_bytes).decode()}"
 
-        img = cv2.imread(input_path)
-        if img is None:
-            raise Exception("Could not read image")
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            print(f" Attempt {attempt}/{MAX_RETRIES} (timeout={REPLICATE_TIMEOUT}s)...")
 
-        h, w, _ = img.shape
+            result_bytes = await asyncio.wait_for(
+                asyncio.to_thread(_run_replicate_sync, image_data_uri, token),
+                timeout=REPLICATE_TIMEOUT,
+            )
 
-        mp_face_mesh = mp.solutions.face_mesh
-        face_mesh = mp_face_mesh.FaceMesh(
-            static_image_mode=True,
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=0.5
-        )
+            name       = Path(output_filename).stem
+            final_path = os.path.join(TEMP_DIR, f"{name}.webp")
+            with open(final_path, "wb") as f:
+                f.write(result_bytes)
 
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        results = face_mesh.process(img_rgb)
+            print(f" AI smile saved on attempt {attempt}: {final_path}")
+            return final_path
 
-        if not results.multi_face_landmarks:
-            print(" No face detected")
-            return await _save_original(input_path, output_filename)
+        except asyncio.TimeoutError:
+            print(f" Attempt {attempt} timed out after {REPLICATE_TIMEOUT}s")
+        except Exception as e:
+            print(f" Attempt {attempt} failed: {e}")
 
-        landmarks = [
-            (int(lm.x * w), int(lm.y * h))
-            for lm in results.multi_face_landmarks[0].landmark
-        ]
+        if attempt < MAX_RETRIES:
+            print(f" Retrying in {RETRY_DELAY}s...")
+            await asyncio.sleep(RETRY_DELAY)  # non-blocking sleep
 
-        result = _apply_smile_warp(img, landmarks)
-
-        name = Path(output_filename).stem
-        final_path = os.path.join(TEMP_DIR, f"{name}.jpg")
-        cv2.imwrite(final_path, result, [cv2.IMWRITE_JPEG_QUALITY, 95])
-
-        print(f" OpenCV smile saved: {final_path}")
-        return final_path
-
-    except Exception as e:
-        print(f" OpenCV fallback failed: {e}")
-        return await _save_original(input_path, output_filename)
-
-
-def _apply_smile_warp(img, landmarks):
-    """Clean OpenCV smile warp."""
-    h, w = img.shape[:2]
-    LEFT_CORNER = 61
-    RIGHT_CORNER = 291
-    UPPER_LIP_KEY = [185, 40, 37, 0, 267, 270, 409]
-
-    left_corner = np.array(landmarks[LEFT_CORNER], dtype=np.float32)
-    right_corner = np.array(landmarks[RIGHT_CORNER], dtype=np.float32)
-
-    mouth_width = np.linalg.norm(right_corner - left_corner)
-    smile_lift = int(mouth_width * 0.22)
-    smile_spread = int(mouth_width * 0.04)
-    radius = 18
-
-    x_grid, y_grid = np.meshgrid(np.arange(w), np.arange(h))
-    disp_x = np.zeros((h, w), dtype=np.float32)
-    disp_y = np.zeros((h, w), dtype=np.float32)
-
-    for corner, sign in [(left_corner, -1), (right_corner, 1)]:
-        dist = np.sqrt((x_grid - corner[0])**2 + (y_grid - corner[1])**2)
-        weight = np.exp(-(dist**2) / (2 * radius**2))
-        disp_y -= smile_lift * weight
-        disp_x += sign * smile_spread * weight
-
-    for idx in UPPER_LIP_KEY:
-        if idx < len(landmarks):
-            pt = np.array(landmarks[idx], dtype=np.float32)
-            dist = np.sqrt((x_grid - pt[0])**2 + (y_grid - pt[1])**2)
-            weight = np.exp(-(dist**2) / (2 * (radius * 0.7)**2))
-            disp_y -= (smile_lift * 0.25) * weight
-
-    map_x = np.clip((x_grid + disp_x).astype(np.float32), 0, w - 1)
-    map_y = np.clip((y_grid + disp_y).astype(np.float32), 0, h - 1)
-    return cv2.remap(img, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    print(" All attempts failed. Returning original image.")
+    return await _save_original(input_path, output_filename)
 
 
 async def _save_original(input_path: str, output_filename: str) -> str:
-    """Last resort: return original image."""
-    img = cv2.imread(input_path)
-    name = Path(output_filename).stem
+    """Last resort: return a copy of the original image using Pillow."""
+    img        = Image.open(input_path).convert("RGB")
+    name       = Path(output_filename).stem
     final_path = os.path.join(TEMP_DIR, f"{name}.jpg")
-    cv2.imwrite(final_path, img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+    img.save(final_path, format="JPEG", quality=95)
+    print(f" Saved original as fallback: {final_path}")
     return final_path
 
 
