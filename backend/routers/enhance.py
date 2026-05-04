@@ -4,7 +4,6 @@ from fastapi import APIRouter, UploadFile, File, Query
 from PIL import Image, ImageEnhance, ImageFilter
 import io
 import base64
-import numpy as np
 
 router = APIRouter()
 
@@ -15,7 +14,6 @@ async def enhance(
     sharp: float = Query(50, ge=0, le=100),
     clarity: float = Query(50, ge=0, le=100)
 ):
-    # Read image
     image = Image.open(io.BytesIO(await file.read())).convert("RGB")
 
     # ─── 1. BRIGHTNESS ───────────────────────────────────────────────────────
@@ -28,55 +26,33 @@ async def enhance(
         contrast_factor = 1.0 + (enh - 50) * 0.012
         image = ImageEnhance.Contrast(image).enhance(contrast_factor)
 
-    # ─── 3. VIBRANCE ─────────────────────────────────────────────────────────
+    # ─── 3. VIBRANCE (via Pillow Color enhancer) ─────────────────────────────
     if enh != 50:
-        img_array = np.array(image, dtype=np.float32)
-        r, g, b = img_array[:,:,0], img_array[:,:,1], img_array[:,:,2]
-        max_c = np.maximum(np.maximum(r, g), b)
-        min_c = np.minimum(np.minimum(r, g), b)
-        saturation = (max_c - min_c) / (max_c + 1e-6)
-        vibrance_strength = (enh - 50) * 0.006
-        vibrance_mask = (1.0 - saturation) * vibrance_strength
-        img_array[:,:,0] = np.clip(r + (r - (g + b) / 2) * vibrance_mask, 0, 255)
-        img_array[:,:,1] = np.clip(g + (g - (r + b) / 2) * vibrance_mask, 0, 255)
-        img_array[:,:,2] = np.clip(b + (b - (r + g) / 2) * vibrance_mask, 0, 255)
-        image = Image.fromarray(img_array.astype(np.uint8))
+        vibrance_factor = 1.0 + (enh - 50) * 0.006
+        image = ImageEnhance.Color(image).enhance(max(0.0, vibrance_factor))
 
-    # ─── 4. SHARPNESS (Unsharp Mask) ─────────────────────────────────────────
+    # ─── 4. SHARPNESS ────────────────────────────────────────────────────────
     if sharp != 50:
-        img_array = np.array(image, dtype=np.float32)
-        blurred = image.filter(ImageFilter.GaussianBlur(radius=1.2))
-        blur_array = np.array(blurred, dtype=np.float32)
-        sharp_strength = (sharp - 50) * 0.06
-        sharpened = img_array + (img_array - blur_array) * sharp_strength
-        image = Image.fromarray(np.clip(sharpened, 0, 255).astype(np.uint8))
+        sharp_factor = 1.0 + (sharp - 50) * 0.06
+        image = ImageEnhance.Sharpness(image).enhance(max(0.0, sharp_factor))
 
-    # ─── 5. CLARITY (Full Deblur - removes blur completely) ──────────────────
+    # ─── 5. CLARITY (multi-pass unsharp via Pillow filters) ──────────────────
     if clarity != 50:
-        img_array = np.array(image, dtype=np.float32)
+        passes = int(1 + (abs(clarity - 50) / 25))  # 1–3 passes based on strength
+        for _ in range(passes):
+            image = image.filter(ImageFilter.UnsharpMask(
+                radius=2,
+                percent=int((clarity - 50) * 3),
+                threshold=2
+            ))
 
-        # 3 levels of detail recovery
-        blur_fine   = np.array(image.filter(ImageFilter.GaussianBlur(radius=1)), dtype=np.float32)
-        blur_mid    = np.array(image.filter(ImageFilter.GaussianBlur(radius=3)), dtype=np.float32)
-        blur_coarse = np.array(image.filter(ImageFilter.GaussianBlur(radius=6)), dtype=np.float32)
-
-        clarity_strength = (clarity - 50) * 0.07
-
-        fine_detail   = (img_array - blur_fine)   * clarity_strength * 1.5
-        mid_detail    = (img_array - blur_mid)     * clarity_strength * 1.0
-        coarse_detail = (img_array - blur_coarse)  * clarity_strength * 0.5
-
-        clarified = img_array + fine_detail + mid_detail + coarse_detail
-        image = Image.fromarray(np.clip(clarified, 0, 255).astype(np.uint8))
-
-        # Extra deblur passes for high clarity values
         if clarity > 70:
             image = image.filter(ImageFilter.SHARPEN)
             image = image.filter(ImageFilter.DETAIL)
         if clarity > 85:
             image = image.filter(ImageFilter.SHARPEN)
 
-    # ─── 6. NOISE REDUCTION (auto when heavy settings) ───────────────────────
+    # ─── 6. NOISE REDUCTION ──────────────────────────────────────────────────
     if enh > 70 or sharp > 70 or clarity > 70:
         image = image.filter(ImageFilter.SMOOTH)
 
