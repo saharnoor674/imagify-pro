@@ -53,7 +53,7 @@ export default function Animation() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #faf5ff, #eff6ff)', padding: '3rem 1rem' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #faf5ff, #eff6ff)', padding: '20px 12px 60px', overflowX: 'hidden' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>Smile Effect</h1>
@@ -61,7 +61,7 @@ export default function Animation() {
         </div>
 
         <div style={{ background: 'white', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '2rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2rem' }}>
 
             {/* Upload */}
             <div>
