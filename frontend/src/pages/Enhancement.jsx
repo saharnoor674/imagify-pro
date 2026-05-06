@@ -84,6 +84,7 @@ export default function Enhancement() {
       minHeight: "100vh",
       background: "linear-gradient(to bottom right, #faf5ff, #eff6ff)",
       padding: "40px 20px 60px",
+      overflowX: "hidden",
       fontFamily: "'Segoe UI', sans-serif",
     }}>
       <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
@@ -97,7 +98,7 @@ export default function Enhancement() {
         </div>
 
         <div style={{ background: "white", borderRadius: "1rem", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", padding: "2rem" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem", marginBottom: "2rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "2rem", marginBottom: "2rem" }}>
 
             {/* Original */}
             <div>
@@ -189,7 +190,7 @@ export default function Enhancement() {
           {/* Buttons */}
           <div style={{ display: "flex", gap: "1rem" }}>
             <button onClick={download} disabled={!enhancedSrc} style={{ flex: 1, background: !enhancedSrc ? "#9ca3af" : "linear-gradient(to right, #9333ea, #3b82f6)", color: "white", padding: "0.75rem 1.5rem", borderRadius: "0.5rem", fontWeight: 600, border: "none", cursor: !enhancedSrc ? "not-allowed" : "pointer", opacity: !enhancedSrc ? 0.5 : 1, fontSize: "1rem" }}>
-              ⬇ Download
+               Download
             </button>
             <button onClick={reset} style={{ flex: 1, padding: "0.75rem 1.5rem", border: "2px solid #d1d5db", borderRadius: "0.5rem", fontWeight: 600, background: "white", cursor: "pointer", fontSize: "1rem", color: "#374151" }}>
               Reset
