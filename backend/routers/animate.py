@@ -12,37 +12,9 @@ from services import animator
 router = APIRouter()
 
 
-@router.post("/api/animate")
-async def animate_image(file: UploadFile = File(...)):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No filename provided")
-
-    temp_dir = os.path.join(os.path.dirname(__file__), "..", "temp")
-    temp_dir = os.path.abspath(temp_dir)
-    os.makedirs(temp_dir, exist_ok=True)
-
-    input_path = os.path.join(temp_dir, file.filename)
-    with open(input_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    name, ext = os.path.splitext(file.filename)
-    out_filename = f"animated_{name}.png"
-
-    out_path = animator.animate_placeholder(input_path, out_filename)
-
-    return FileResponse(
-        out_path,
-        media_type="image/png",
-        filename=out_filename
-    )
-
-
 @router.post("/api/animate/smile")
 async def generate_smile(file: UploadFile = File(...)):
-    """
-    Generate real AI smile using Replicate (with retry logic).
-    Falls back to OpenCV only if Replicate fails 3 times.
-    """
+    
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
@@ -75,7 +47,7 @@ async def generate_smile(file: UploadFile = File(...)):
             input_path, out_filename
         )
 
-        # ── Detect output format (Replicate returns webp, OpenCV returns jpg) 
+        # ── Detect output format (Replicate returns webp,jpg) 
         out_ext = Path(out_path).suffix.lower()
         media_type = "image/webp" if out_ext == ".webp" else "image/jpeg"
         download_name = f"{out_filename}{out_ext}"
